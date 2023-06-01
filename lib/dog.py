@@ -87,3 +87,47 @@ class Dog:
             return cls.new_from_db(row)
         else:
             return None
+
+    @classmethod
+    def find_or_create_by(cls, name, breed):
+        sql = """
+            SELECT *
+            FROM dogs
+            WHERE name = ? AND breed = ?
+        """
+
+        row = CURSOR.execute(sql, (name, breed)).fetchone()
+        if row is not None:
+            return cls.new_from_db(row)
+        else:
+            dog = cls(name, breed)
+            dog.save()
+            return dog
+        
+    def save(self):
+        if self.id is None:
+            sql = """
+                INSERT INTO dogs (name, breed)
+                VALUES (?, ?)
+            """
+
+            CURSOR.execute(sql, (self.name, self.breed))
+            self.id = CURSOR.lastrowid
+        else:
+            sql = """
+                UPDATE dogs
+                SET name = ?, breed = ?
+                WHERE id = ?
+            """
+
+            CURSOR.execute(sql, (self.name, self.breed, self.id))
+
+    @classmethod
+    def update(cls, dog_id, new_name):
+        sql = """
+            UPDATE dogs
+            SET name = ?
+            WHERE id = ?
+        """
+
+        CURSOR.execute(sql, (new_name, dog_id))
